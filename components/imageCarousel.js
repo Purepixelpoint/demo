@@ -11,8 +11,9 @@ const ImageCarousel = ({ images }) => {
     pan: { x: 0, y: 0 }, 
     activeIndex: -1 
   });
-  const [lastTapTime, setLastTapTime] = useState(0);
+  
   const containerRef = useRef(null);
+  const lastTapTime = useRef(0);
   const panStartRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -22,27 +23,28 @@ const ImageCarousel = ({ images }) => {
   const handleZoom = (clientX, clientY) => {
     const container = containerRef.current;
     const rect = container.getBoundingClientRect();
-    
-    if (zoomState.scale === 1) {
+    const { scale } = zoomState;
+
+    if (scale === 1) {
+      const newScale = 2;
       const offsetX = clientX - rect.left;
       const offsetY = clientY - rect.top;
-      
-      const scale = 2;
-      const maxX = (container.offsetWidth * (scale - 1)) / 2;
-      const maxY = (container.offsetHeight * (scale - 1)) / 2;
+
+      const maxX = (container.offsetWidth * (newScale - 1)) / 2;
+      const maxY = (container.offsetHeight * (newScale - 1)) / 2;
 
       const newPanX = Math.max(-maxX, Math.min(
-        (container.offsetWidth/2 - offsetX) * (scale - 1),
+        (container.offsetWidth/2 - offsetX) * (newScale - 1),
         maxX
       ));
       
       const newPanY = Math.max(-maxY, Math.min(
-        (container.offsetHeight/2 - offsetY) * (scale - 1),
+        (container.offsetHeight/2 - offsetY) * (newScale - 1),
         maxY
       ));
 
       setZoomState({
-        scale,
+        scale: newScale,
         pan: { x: newPanX, y: newPanY },
         activeIndex: currentIndex
       });
@@ -53,13 +55,15 @@ const ImageCarousel = ({ images }) => {
 
   const handleTouchStart = (e) => {
     const currentTime = Date.now();
-    const tapLength = currentTime - lastTapTime;
-    
+    const tapLength = currentTime - lastTapTime.current;
+
     if (tapLength < 300 && tapLength > 0) {
-      handleZoom(e.touches[0].clientX, e.touches[0].clientY);
-      setLastTapTime(0);
+      e.preventDefault();
+      const touch = e.touches[0];
+      handleZoom(touch.clientX, touch.clientY);
+      lastTapTime.current = 0;
     } else {
-      setLastTapTime(currentTime);
+      lastTapTime.current = currentTime;
       if (zoomState.scale === 1) {
         setDragStartX(e.touches[0].clientX);
         setIsDragging(true);
@@ -126,13 +130,14 @@ const ImageCarousel = ({ images }) => {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleDragEnd}
       onTouchCancel={handleDragEnd}
+      style={{ touchAction: zoomState.scale === 1 ? 'pan-y' : 'none' }}
     >
       <div 
         className={`flex transition-transform duration-500 ease-in-out ${
           isDragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}
         style={{ 
-          transform: `translateX(calc(-${currentIndex * 100}% + ${currentTranslate}px)`,
+          transform: `translateX(calc(-${currentIndex * 100}% + ${currentTranslate}px))`,
           transition: isDragging ? 'none' : undefined
         }}
       >
@@ -140,10 +145,6 @@ const ImageCarousel = ({ images }) => {
           <div 
             key={index}
             className="min-w-full h-96 relative select-none overflow-hidden"
-            onDoubleClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              handleZoom(e.clientX, e.clientY);
-            }}
           >
             <img
               src={image}
