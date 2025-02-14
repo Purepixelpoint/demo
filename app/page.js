@@ -12,7 +12,7 @@ export default function Home() {
      
         <h1>Image Carousel</h1>
        
-        <ImageCarousel images={images} />
+        <ImageCarousel images={images} index={1}/>
     </div>
   );
 }

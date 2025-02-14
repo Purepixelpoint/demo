@@ -1,8 +1,8 @@
 'use client'
 import { useState, useRef, useEffect } from 'react';
 
-const ImageCarousel = ({ images }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+const ImageCarousel = ({ images, index }) => {
+  const [currentIndex, setCurrentIndex] = useState(index);
   const [dragStartX, setDragStartX] = useState(0);
   const [currentTranslate, setCurrentTranslate] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -118,8 +118,6 @@ const ImageCarousel = ({ images }) => {
     setIsDragging(false);
   };
 
-  const goToPrevious = () => setCurrentIndex(prev => prev === 0 ? images.length - 1 : prev - 1);
-  const goToNext = () => setCurrentIndex(prev => prev === images.length - 1 ? 0 : prev + 1);
   const goToSlide = (slideIndex) => setCurrentIndex(slideIndex);
 
   return (
@@ -133,7 +131,7 @@ const ImageCarousel = ({ images }) => {
       style={{ touchAction: zoomState.scale === 1 ? 'pan-y' : 'none' }}
     >
       <div 
-        className={`flex transition-transform duration-500 ease-in-out ${
+        className={`flex transition-transform duration-300 ease-in-out ${
           isDragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}
         style={{ 
@@ -154,28 +152,13 @@ const ImageCarousel = ({ images }) => {
                 transform: currentIndex === index ? 
                   `scale(${zoomState.scale}) translate(${zoomState.pan.x}px, ${zoomState.pan.y}px)` :
                   'scale(1) translate(0, 0)',
-                transition: isDragging ? 'none' : 'transform 300ms ease-out'
+                transition: isDragging ? 'none' : 'transform 200ms ease-out'
               }}
               draggable="false"
             />
           </div>
         ))}
       </div>
-
-      <button
-        onClick={goToPrevious}
-        className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/30 hover:bg-white/50 text-black rounded-full p-2 backdrop-blur-sm"
-        aria-label="Previous slide"
-      >
-        ❮
-      </button>
-      <button
-        onClick={goToNext}
-        className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/30 hover:bg-white/50 text-black rounded-full p-2 backdrop-blur-sm"
-        aria-label="Next slide"
-      >
-        ❯
-      </button>
 
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
         {images.map((_, slideIndex) => (
